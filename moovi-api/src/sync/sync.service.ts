@@ -26,9 +26,9 @@ export class SyncService {
     this.logger.log(`Fetched ${rawItems.length} unique items from TMDB`);
 
     // Build trending set with rank
-    const trendingIds = new Map<number, number>();
+    const trendingIds = new Map<string, number>();
     const trendingRaw = await this.fetchTrendingRaw();
-    trendingRaw.forEach((item, idx) => trendingIds.set(item.id, idx + 1));
+    trendingRaw.forEach((item, idx) => trendingIds.set(contentKey(item), idx + 1));
 
     const stats = { inserted: 0, updated: 0, skipped: 0 };
     const batches = chunk(rawItems, 10);
@@ -46,7 +46,7 @@ export class SyncService {
 
   private async syncItem(
     item: any,
-    trendingIds: Map<number, number>,
+    trendingIds: Map<string, number>,
     platformMap: Map<string, PlatformEntity>,
     country: string,
     stats: { inserted: number; updated: number; skipped: number },
@@ -87,7 +87,7 @@ export class SyncService {
       const releaseYear: number | null = parseYear(details.first_air_date ?? details.release_date);
       const ageRating = resolveAgeRating(certRaw, mediaType, details);
 
-      const rankInTrending = trendingIds.get(tmdbId);
+      const rankInTrending = trendingIds.get(contentKey({ id: tmdbId, media_type: mediaType }));
       const trending = !!rankInTrending;
       const popularityRank = rankInTrending ?? null;
 
@@ -96,7 +96,9 @@ export class SyncService {
       else if (!trending && (details.vote_average ?? 0) > 7.5 && (details.vote_count ?? 0) > 1000) badge = 'TENDENCIA';
 
       // Determine popularity_trend: compare with existing record
-      const existing = await this.movies.findOne({ where: { tmdb_id: tmdbId } });
+      const existing = await this.movies.findOne({
+        where: { tmdb_id: tmdbId, media_type: mediaType },
+      });
       let popularityTrend: 'up' | 'down' = 'up';
       if (existing) {
         const oldPop = existing.popularity_rank ?? 999;
@@ -187,11 +189,17 @@ export class SyncService {
   }
 }
 
+function contentKey(item: { id: number; media_type?: string }): string {
+  const mediaType = item.media_type === 'movie' ? 'movie' : 'tv';
+  return `${mediaType}:${item.id}`;
+}
+
 function dedup(items: any[]): any[] {
-  const seen = new Set<number>();
+  const seen = new Set<string>();
   return items.filter((i) => {
-    if (seen.has(i.id)) return false;
-    seen.add(i.id);
+    const key = contentKey(i);
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS movies (
   id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  tmdb_id          INT UNSIGNED NOT NULL UNIQUE,
+  tmdb_id          INT UNSIGNED NOT NULL,
   slug             VARCHAR(255) NOT NULL UNIQUE,
   title            VARCHAR(500) NOT NULL,
   overview         TEXT         DEFAULT NULL,
@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS movies (
   release_year     SMALLINT UNSIGNED DEFAULT NULL,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_movie_platform FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE SET NULL
+  CONSTRAINT fk_movie_platform FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_movies_media_tmdb (media_type, tmdb_id)
 );
 
 CREATE INDEX idx_movies_trending        ON movies (trending);

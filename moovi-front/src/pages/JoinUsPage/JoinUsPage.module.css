@@ -25,6 +25,19 @@
   margin-top: var(--space-2xl);
 }
 
+:global([data-theme='dark']) .page input:not([type='checkbox']),
+:global([data-theme='dark']) .page select,
+:global([data-theme='dark']) .page select option {
+  color: #000;
+  background: #fff;
+  caret-color: #000;
+  -webkit-text-fill-color: #000;
+}
+
+:global([data-theme='dark']) .page button:not(.close) {
+  color: #000;
+}
+
 .title {
   text-align: center;
   font-size: 16px;

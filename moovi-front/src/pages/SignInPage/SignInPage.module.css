@@ -25,6 +25,18 @@
   margin-top: var(--space-3xl);
 }
 
+:global([data-theme='dark']) .page input,
+:global([data-theme='dark']) .page select {
+  color: #000;
+  background: #fff;
+  caret-color: #000;
+  -webkit-text-fill-color: #000;
+}
+
+:global([data-theme='dark']) .page button:not(.close) {
+  color: #000;
+}
+
 .title {
   text-align: center;
   font-size: 15px;

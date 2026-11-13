@@ -39,10 +39,61 @@ export class TmdbClient {
 
   private async get<T>(path: string, params: Record<string, any> = {}): Promise<T> {
     const url = `https://api.themoviedb.org/3${path}`;
-    const res = await firstValueFrom(
-      this.http.get<T>(url, { headers: this.headers, params }),
+    const fallbackDelays = [1000, 3000];
+
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      try {
+        const res = await firstValueFrom(
+          this.http.get<T>(url, { headers: this.headers, params }),
+        );
+        return res.data;
+      } catch (err) {
+        if (attempt === 2 || !this.isTransient(err)) throw err;
+        const wait = this.retryDelay(err, fallbackDelays[attempt]);
+        this.logger.warn(
+          `TMDB respondió ${this.failureLabel(err)}; reintento ${attempt + 1}/2 en ${wait} ms`,
+        );
+        await this.delay(wait);
+      }
+    }
+
+    throw new Error('TMDB no respondió');
+  }
+
+  private isTransient(err: any): boolean {
+    const status = err?.response?.status ?? err?.cause?.response?.status;
+    if (status === 429 || status === 502 || status === 503 || status === 504) return true;
+    if (status) return false;
+    const code = err?.code ?? err?.cause?.code;
+    return (
+      code === 'ECONNRESET' ||
+      code === 'ETIMEDOUT' ||
+      code === 'ECONNABORTED' ||
+      code === 'EAI_AGAIN'
     );
-    return res.data;
+  }
+
+  private retryDelay(err: any, fallbackMs: number): number {
+    const header = err?.response?.headers?.['retry-after'] ?? err?.cause?.response?.headers?.['retry-after'];
+    if (header == null || header === '') return fallbackMs;
+
+    const seconds = Number(header);
+    const waitMs = Number.isFinite(seconds)
+      ? seconds * 1000
+      : Date.parse(String(header)) - Date.now();
+    if (!Number.isFinite(waitMs) || waitMs < 0) return fallbackMs;
+    return Math.min(waitMs, 10_000);
+  }
+
+  private failureLabel(err: any): string {
+    const status = err?.response?.status ?? err?.cause?.response?.status;
+    if (status) return String(status);
+    const code = err?.code ?? err?.cause?.code;
+    return typeof code === 'string' ? code : 'error de red';
+  }
+
+  private delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async getTrending(page = 1): Promise<any[]> {

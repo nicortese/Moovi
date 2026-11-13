@@ -19,7 +19,7 @@
   position: absolute;
   width: 6px;
   height: 6px;
-  background: var(--color-bg);
+  background: var(--color-text);
   border-radius: 50%;
   top: 50%;
   left: 50%;

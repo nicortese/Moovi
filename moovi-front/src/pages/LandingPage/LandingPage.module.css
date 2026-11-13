@@ -80,7 +80,6 @@
 
 .logo {
   --color-text: #ffffff;
-  --color-bg: #0a0a0a;
   align-self: flex-start;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.45));
 }

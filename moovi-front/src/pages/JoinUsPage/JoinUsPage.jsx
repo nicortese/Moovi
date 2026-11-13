@@ -8,6 +8,19 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import styles from './JoinUsPage.module.css';
 
+function formatBirthDate(next, previous) {
+  const digits = next.replace(/\D/g, '').slice(0, 8);
+  let formatted = digits.slice(0, 2);
+  if (digits.length >= 2) formatted += `/${digits.slice(2, 4)}`;
+  if (digits.length >= 4) formatted += `/${digits.slice(4, 8)}`;
+
+  const deleting = next.length < previous.length;
+  if (deleting && formatted.endsWith('/') && !next.endsWith('/')) {
+    formatted = formatted.slice(0, -1);
+  }
+  return formatted;
+}
+
 export function JoinUsPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -16,6 +29,7 @@ export function JoinUsPage() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [country, setCountry] = useState('Argentina');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -86,7 +100,15 @@ export function JoinUsPage() {
           onChange={(e) => setLastName(e.target.value)}
           required
         />
-        <Input type="text" placeholder={t('auth.joinUs.dateOfBirth')} />
+        <Input
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder={t('auth.joinUs.dateOfBirth')}
+          value={birthDate}
+          maxLength={10}
+          onChange={(e) => setBirthDate((current) => formatBirthDate(e.target.value, current))}
+        />
         <div className={styles.selectWrap}>
           <select
             className={styles.select}

@@ -5,16 +5,18 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { PlatformEntity } from '../platforms/platform.entity';
 
 @Entity('movies')
+@Unique('uq_movies_media_tmdb', ['media_type', 'tmdb_id'])
 export class MovieEntity {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   tmdb_id: number;
 
   @Column({ unique: true })
